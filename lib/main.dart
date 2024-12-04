@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'AnkizatorAI',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightGreenAccent),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellow.shade700),
         useMaterial3: true,
       ),
       home: const MyHomePage(),
@@ -31,30 +31,33 @@ class MyHomePage extends StatelessWidget {
         title: const Text("AnkizatorAI"),
       ),
       body: GridView.count(
-          childAspectRatio: 5 / 6,
-          crossAxisCount: 2,
+          childAspectRatio: 4 / 6,
+          crossAxisCount: 3,
           children: const <Widget>[
             Center(
               child: Card(
                   child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    AspectRatio(
-                      aspectRatio: 1,
-                      child: ClipOval(
-                        child: Image(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AspectRatio(
+                          aspectRatio: 1,
+                          child: ClipOval(
+                            child: Image(
                             image: NetworkImage(
-                                "https://baconmockup.com/200/200")),
-                      ),
+                                "https://merula.pl/kos/wp-content/uploads/2014/10/merula_logo4@2x.png")
+                            ),
+                          ),
+                        ),
+                        Text("Some example test")
+                      ],
                     ),
-                    Text("Some example test")
-                  ],
-                ),
-              )),
+                  )
+              ),
             )
-          ]),
+          ]
+      ),
     );
   }
 }
