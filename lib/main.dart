@@ -1,11 +1,15 @@
+import 'package:ankizator_ai/source.dart';
 import 'package:flutter/material.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +61,45 @@ class MyHomePage extends StatelessWidget {
               ),
             )
           ]
+      ),
+    );
+  }
+}
+
+
+class _MyAppState extends State<MyApp> {
+  late Future<List<Source>> futureAlbum;
+  @override
+  void initState() {
+    super.initState();
+    futureAlbum = fetchAlbum();
+  }
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'AnkizatorAI',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellow.shade700),
+        useMaterial3: true,
+      ),
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Fetch Data Example'),
+        ),
+        body: Center(
+          child: FutureBuilder<List<Source>>(
+            future: futureAlbum,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Text(snapshot.data![0].name);
+              } else if (snapshot.hasError) {
+                return Text('${snapshot.error}');
+              }
+              // By default, show a loading spinner.
+              return const CircularProgressIndicator();
+            },
+          ),
+        ),
       ),
     );
   }
