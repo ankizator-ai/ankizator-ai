@@ -34,7 +34,6 @@ class MyHomePage extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("AnkizatorAI"),
       ),
-
     );
   }
 }
@@ -65,31 +64,32 @@ class _MyAppState extends State<MyApp> {
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 return GridView.count(
-                  childAspectRatio: 4 / 6,
-                  crossAxisCount: 3,
-                  children: const <Widget>[
-                    Center(
-                      child: Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              AspectRatio(
-                                aspectRatio: 1,
-                                child: ClipOval(
-                                  child: Image(image: NetworkImage(
-                                      "https://merula.pl/kos/wp-content/uploads/2014/10/merula_logo4@2x.png")
+                    childAspectRatio: 4 / 6,
+                    crossAxisCount: 3,
+                    children: snapshot.data!.map<Widget>((doc){
+                      return const Center(
+                        child: Card(
+                            child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  AspectRatio(
+                                    aspectRatio: 1,
+                                    child: ClipOval(
+                                      child: Image(image: NetworkImage(
+                                          "https://merula.pl/kos/wp-content/uploads/2014/10/merula_logo4@2x.png")
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  Text("Some example test")
+                                ],
                               ),
-                              Text("Some example test")
-                            ],
-                          ),
-                        )
-                      ),
-                    )
-                  ]
+                            )
+                        ),
+                      );
+                    }
+                    ).toList()
                 );
               } else if (snapshot.hasError) {
                 return Text('${snapshot.error}');
