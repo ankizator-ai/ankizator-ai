@@ -24,26 +24,27 @@ class WordsPair {
   }
 }
 
-//class ContextsPair {
-//  final String pl;
-//  final String en;
-//  const ContextsPair ({
-//    required this.pl,
-//    required this.en,
-//  });
-//}
-//
-//class WordsWithContexts {
-//  final WordsPair words;
-//  final ContextsPair contexts;
-//  const WordsWithContexts ({
-//    required this.words,
-//    required this.contexts,
-//  });
-//}
-Future<List<WordsPair>> fetchWords() async {
+class ContextsPair {
+ final String pl;
+ final String en;
+ const ContextsPair ({
+   required this.pl,
+   required this.en,
+ });
+}
+
+class WordsWithContexts {
+ final WordsPair words;
+ final ContextsPair contexts;
+ const WordsWithContexts ({
+   required this.words,
+   required this.contexts,
+ });
+}
+
+Future<List<WordsPair>> fetchWords(String urlMerula) async {
   var url = Uri.http('138.2.174.202','/api/words');
-  var destination = 'https://merula.pl/jezyk-angielski/repetytorium-jednotomowe-pr-rozdzial-1-czlowiek-tabela-slow/';
+  var destination = urlMerula;
   var jsonBody = jsonEncode({'source': destination});
   final response = await http.post(url, headers: { 'Content-Type': 'application/json',},
 body: jsonBody
