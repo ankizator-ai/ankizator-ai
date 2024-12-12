@@ -65,8 +65,7 @@ class WordsWithContexts {
 // TODO: replace extremely bad practise which is sending the whole giant JSON with words
 Future<List<WordsWithContexts>> fetchWordsWithContexts(List<WordsPair> words) async {
   var url = Uri.http('138.2.174.202','/api/contexts');
-  var realWords = words.sublist(2,4);
-  var jsonBody = jsonEncode({'words': realWords});
+  var jsonBody = jsonEncode({'words': words});
   final response = await http.post(url, headers: { 'Content-Type': 'application/json',},
 body: jsonBody
   );

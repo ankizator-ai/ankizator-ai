@@ -5,7 +5,8 @@ import 'package:http/http.dart' as http;
 class WordsPair {
   final String pl;
   final String en;
-  const WordsPair ({
+  bool chosen = false;
+  WordsPair ({
     required this.pl,
     required this.en,
   });

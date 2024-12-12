@@ -109,11 +109,19 @@ class _WordsRoute extends State<WordsRoute> {
   }
 
   _moveToDownload() async {
-    var words = await futureWords;
+    //TODO: TWOJA MAMA
+    List<WordsPair> words = await futureWords;
+    List<WordsPair> chosenWords = [];
+
+    for(var word in words){
+      if(word.chosen){
+        chosenWords.add(word);
+      }
+    }
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => WordsWithContextsRoute(words: words),
+        builder: (context) => WordsWithContextsRoute(words: chosenWords),
       ),
     );
   }
@@ -141,9 +149,10 @@ class _WordsRoute extends State<WordsRoute> {
           ),
         ),
 
-        floatingActionButton: FloatingActionButton(onPressed: _moveToDownload,
-        tooltip: 'Generate contexts', child: const Icon(Icons.add),),
-        body: ListView(
+        floatingActionButton: FloatingActionButton(
+          onPressed: _moveToDownload,
+          tooltip: 'Generate contexts', child: const Icon(Icons.add),),
+          body: ListView(
           children: [
             Center(
               child: FutureBuilder<List<WordsPair>>(
@@ -173,16 +182,22 @@ class WordsTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return Table(
         border: TableBorder.all(),
         columnWidths: const <int, TableColumnWidth>{
           0: FlexColumnWidth(1),
-          1: FlexColumnWidth(1),
+          1: FlexColumnWidth(3),
+          2: FlexColumnWidth(3),
         },
         defaultVerticalAlignment: TableCellVerticalAlignment.middle,
         children: words.map((wordsPair) {
           return TableRow(
             children: [
+                TableCell(
+                    verticalAlignment: TableCellVerticalAlignment.top,
+                    child: CheckBoxWidget(wordsPair: wordsPair)
+                ),
                 TableCell(
                     verticalAlignment: TableCellVerticalAlignment.top,
                     child: Text(wordsPair.pl)
@@ -194,6 +209,32 @@ class WordsTable extends StatelessWidget {
             ],
           );
         }).toList()
+    );
+  }
+}
+
+class CheckBoxWidget extends StatefulWidget {
+  final WordsPair wordsPair;
+
+  const CheckBoxWidget ({super.key, required this.wordsPair});
+
+  @override
+  State<CheckBoxWidget> createState() => _CheckBoxState();
+}
+
+class _CheckBoxState extends State<CheckBoxWidget>{
+  bool isChecked = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Checkbox(
+      value: isChecked,
+      onChanged: (bool? value) {
+        setState(() {
+          isChecked = value!;
+          widget.wordsPair.chosen = value;
+        });
+      },
     );
   }
 }
