@@ -19,27 +19,15 @@ class WordsPair {
             pl: pl,
             en: en,
           ),
-      _ => throw const FormatException('Failed to load source.'),
+      _ => throw const FormatException('Failed to decode words'),
     };
   }
-}
-
-class ContextsPair {
- final String pl;
- final String en;
- const ContextsPair ({
-   required this.pl,
-   required this.en,
- });
-}
-
-class WordsWithContexts {
- final WordsPair words;
- final ContextsPair contexts;
- const WordsWithContexts ({
-   required this.words,
-   required this.contexts,
- });
+  Map<String, dynamic> toJson() {
+    return {
+      'pl': pl,
+      'en': en,
+    };
+  }
 }
 
 Future<List<WordsPair>> fetchWords(String urlMerula) async {
@@ -50,20 +38,14 @@ Future<List<WordsPair>> fetchWords(String urlMerula) async {
 body: jsonBody
   );
   if (response.statusCode == 200) {
-    // If the server did return a 200 OK response,
-    // then parse the JSON.
     var decodedBody = utf8.decode(response.bodyBytes);
     var rawWords = jsonDecode(decodedBody) as Map<String, dynamic>;
-    //List<WordsPair> words = jsonDecode(rawWords['data']);
-    //return words;
     List<WordsPair> sources = [];
     for (var element in rawWords['data']) {
       sources.add(WordsPair.fromJson(element));
     }
     return sources;
   } else {
-    // If the server did not return a 200 OK response,
-    // then throw an exception.
-    throw Exception('Failed to load source');
+    throw Exception('Failed to load words');
   }
 }

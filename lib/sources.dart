@@ -27,26 +27,16 @@ class Source {
 }
 Future<List<Source>> fetchAlbum() async {
   var url = Uri.http('138.2.174.202','/api/sources');
-  //var destination = 'https://merula.pl/jezyk-angielski/repetytorium-jednotomowe-pr-rozdzial-1-czlowiek-tabela-slow/';
-  //var jsonBody = jsonEncode({'source': destination});
-  final response = await http.get(url,
-    //    headers: {
-    //  'Content-Type': 'application/json',
-    //},
-    //body: jsonBody
-  );
+  final response = await http.get(url);
   if (response.statusCode == 200) {
-    // If the server did return a 200 OK response,
-    // then parse the JSON.
-    var rawSources = jsonDecode(response.body) as Map<String, dynamic>;
+    var decodedBody = utf8.decode(response.bodyBytes);
+    var rawSources = jsonDecode(decodedBody) as Map<String, dynamic>;
     List<Source> sources = [];
     for (var element in rawSources['data']) {
       sources.add(Source.fromJson(element));
     }
     return sources;
   } else {
-    // If the server did not return a 200 OK response,
-    // then throw an exception.
     throw Exception('Failed to load source');
   }
 }
