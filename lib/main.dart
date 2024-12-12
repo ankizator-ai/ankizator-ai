@@ -1,125 +1,242 @@
+import 'package:ankizator_ai/sources.dart';
+import 'package:ankizator_ai/words.dart';
+import 'package:ankizator_ai/words_with_contexts.dart';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(const MyApp());
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+
+class _MyAppState extends State<MyApp> {
+  late Future<List<Source>> futureAlbum;
+
+  @override
+  void initState() {
+    super.initState();
+    futureAlbum = fetchAlbum();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'AnkizatorAI',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellow.shade700),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('AnkizatorAI'),
+        ),
+        body: Center(
+          child: FutureBuilder<List<Source>>(
+            future: futureAlbum,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return GridView.count(
+                    childAspectRatio: 4 / 6,
+                    crossAxisCount: 3,
+                    children: snapshot.data!.map<Widget>((doc) {
+                      return GestureDetector(
+                          onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => WordsRoute(urlMerula: doc.url), // Replace with your screen
+                            ),
+                          );
+                        },
+                          child: Center(
+                            child: Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      AspectRatio(
+                                        aspectRatio: 1,
+                                        child: ClipOval(
+                                          child: Image.network(
+                                              "https://merula.pl/kos/wp-content/uploads/2014/10/merula_logo4@2x.png")
+
+                                        ),
+                                      ),
+                                      Text(doc.name)
+                                    ],
+                                  ),
+                                )
+                            ),
+                          )
+                      );
+                    }
+                    ).toList()
+                );
+              } else if (snapshot.hasError) {
+                return Text('${snapshot.error}');
+              }
+              // By default, show a loading spinner.
+              return const CircularProgressIndicator();
+            },
+          ),
+        ),
+      ),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class WordsRoute extends StatefulWidget {
+  final String urlMerula;
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+  const WordsRoute({super.key, required this.urlMerula});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<WordsRoute> createState() => _WordsRoute();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _WordsRoute extends State<WordsRoute> {
+  late Future<List<WordsPair>> futureWords;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  @override
+  void initState() {
+    super.initState();
+    futureWords = fetchWords(widget.urlMerula);
+  }
+
+  _moveToDownload() async {
+    //TODO: TWOJA MAMA
+    List<WordsPair> words = await futureWords;
+    List<WordsPair> chosenWords = [];
+
+    for(var word in words){
+      if(word.chosen){
+        chosenWords.add(word);
+      }
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WordsWithContextsRoute(words: chosenWords),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+    return MaterialApp(
+      title: 'AnkizatorAI',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellow.shade700),
+        useMaterial3: true,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Dictionary'),
+          leading: BackButton(
+              onPressed: () {
+                Navigator.pop(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyApp(),
+                  ),
+                );
+              }
+          ),
         ),
+
+        floatingActionButton: FloatingActionButton(
+          onPressed: _moveToDownload,
+          tooltip: 'Generate contexts', child: const Icon(Icons.add),),
+          body: ListView(
+          children: [
+            Center(
+              child: FutureBuilder<List<WordsPair>>(
+                future: futureWords,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return SingleChildScrollView(
+                        child: WordsTable(words: snapshot.data!));
+                  } else if (snapshot.hasError) {
+                    return Text('${snapshot.error}');
+                  }
+                  return const CircularProgressIndicator();
+                },
+              ),
+            ),
+          ]
+        )
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
+
+class WordsTable extends StatelessWidget {
+  final List<WordsPair> words;
+
+  const WordsTable ({super.key, required this.words});
+
+  @override
+  Widget build(BuildContext context) {
+
+    return Table(
+        border: TableBorder.all(),
+        columnWidths: const <int, TableColumnWidth>{
+          0: FlexColumnWidth(1),
+          1: FlexColumnWidth(3),
+          2: FlexColumnWidth(3),
+        },
+        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+        children: words.map((wordsPair) {
+          return TableRow(
+            children: [
+                TableCell(
+                    verticalAlignment: TableCellVerticalAlignment.top,
+                    child: CheckBoxWidget(wordsPair: wordsPair)
+                ),
+                TableCell(
+                    verticalAlignment: TableCellVerticalAlignment.top,
+                    child: Text(wordsPair.pl)
+                ),
+                TableCell(
+                    verticalAlignment: TableCellVerticalAlignment.top,
+                    child: Text(wordsPair.en)
+                )
+            ],
+          );
+        }).toList()
+    );
+  }
+}
+
+class CheckBoxWidget extends StatefulWidget {
+  final WordsPair wordsPair;
+
+  const CheckBoxWidget ({super.key, required this.wordsPair});
+
+  @override
+  State<CheckBoxWidget> createState() => _CheckBoxState();
+}
+
+class _CheckBoxState extends State<CheckBoxWidget>{
+  bool isChecked = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Checkbox(
+      value: isChecked,
+      onChanged: (bool? value) {
+        setState(() {
+          isChecked = value!;
+          widget.wordsPair.chosen = value;
+        });
+      },
+    );
+  }
+}
+
+
