@@ -6,7 +6,7 @@ import 'package:ankizator_ai/words_with_contexts.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-const String kBaseUrl = '192.168.19.115';
+const String kBaseUrl = '138.2.174.202';
 
 void main() => runApp(const MyApp());
 
@@ -227,72 +227,6 @@ class _WordsRoute extends State<WordsRoute> {
     );
   }
 }
-
-// class WordsTable extends StatelessWidget {
-//   final List<WordsPair> words;
-//
-//   const WordsTable ({super.key, required this.words});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//
-//     return Table(
-//         border: TableBorder.all(),
-//         columnWidths: const <int, TableColumnWidth>{
-//           0: FlexColumnWidth(1),
-//           1: FlexColumnWidth(3),
-//           2: FlexColumnWidth(3),
-//         },
-//         defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-//         children: words.map((wordsPair) {
-//           return TableRow(
-//             children: [
-//                 TableCell(
-//                     verticalAlignment: TableCellVerticalAlignment.top,
-//                     child: CheckBoxWidget(wordsPair: wordsPair)
-//                 ),
-//                 TableCell(
-//                     verticalAlignment: TableCellVerticalAlignment.top,
-//                     child: Text(wordsPair.og)
-//                 ),
-//                 TableCell(
-//                     verticalAlignment: TableCellVerticalAlignment.top,
-//                     child: Text(wordsPair.tr)
-//                 )
-//             ],
-//           );
-//         }).toList()
-//     );
-//   }
-// }
-//
-// class CheckBoxWidget extends StatefulWidget {
-//   final WordsPair wordsPair;
-//
-//   const CheckBoxWidget ({super.key, required this.wordsPair});
-//
-//   @override
-//   State<CheckBoxWidget> createState() => _CheckBoxState();
-// }
-//
-// class _CheckBoxState extends State<CheckBoxWidget>{
-//   bool isChecked = false;
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Checkbox(
-//       value: isChecked,
-//       onChanged: (bool? value) {
-//         setState(() {
-//           isChecked = value!;
-//           widget.wordsPair.chosen = value;
-//         });
-//       },
-//     );
-//   }
-// }
-//
-
 
 class WordsTable extends StatefulWidget {
   final List<WordsPair> words;
