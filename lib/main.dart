@@ -6,7 +6,7 @@ import 'package:ankizator_ai/words_with_contexts.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-const String kBaseUrl = '192.168.19.115';
+const String kBaseUrl = '138.2.174.202';
 
 void main() => runApp(const MyApp());
 
