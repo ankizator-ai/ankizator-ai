@@ -1,35 +1,44 @@
 import 'dart:convert';
+import 'dart:ffi';
+import 'dart:io';
 
+import 'package:ankizator_ai/main.dart';
 import 'package:ankizator_ai/words.dart';
-//import 'package:file_picker/file_picker.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ContextsPair {
- final String pl;
- final String en;
+ final int id;
+ final String og;
+ final String tr;
  const ContextsPair ({
-   required this.pl,
-   required this.en,
+   required this.id,
+   required this.og,
+   required this.tr,
  });
  factory ContextsPair.fromJson(Map<String, dynamic> json) {
    return switch (json) {
      {
-     'pl': String pl,
-     'en': String en,
+     'id': int id,
+     'og': String og,
+     'tr': String tr,
      } =>
          ContextsPair(
-           pl: pl,
-           en: en,
+           id: id,
+           og: og,
+           tr: tr,
          ),
      _ => throw const FormatException('Failed to load contexts.'),
    };
  }
  Map<String, dynamic> toJson() {
    return {
-     'pl': pl,
-     'en': en,
+     'id': id,
+     'og': og,
+     'tr': tr,
    };
  }
 }
@@ -44,51 +53,52 @@ class WordsWithContexts {
  factory WordsWithContexts.fromJson(Map<String, dynamic> json) {
    return switch (json) {
      {
-     'wordsPair': Map<String, dynamic> wordsPair,
+     'word': Map<String, dynamic> wordsPair,
      'context': Map<String, dynamic> context,
      } =>
          WordsWithContexts(
-             wordsPair: WordsPair.fromJson(wordsPair),
-              contexts: ContextsPair.fromJson(context),
+           wordsPair: WordsPair.fromJson(wordsPair),
+           contexts: ContextsPair.fromJson(context),
          ),
      _ => throw const FormatException('Failed to decode words with contexts'),
    };
  }
  Map<String, dynamic> toJson() {
    return {
-     'wordsPair': contexts.toJson(),
-     'context': wordsPair.toJson(),
+     'word': wordsPair.toJson(),
+     'context': contexts.toJson(),
    };
  }
 }
 
-// TODO: replace extremely bad practise which is sending the whole giant JSON with words
-Future<List<WordsWithContexts>> fetchWordsWithContexts(List<WordsPair> words) async {
-  var url = Uri.http('138.2.174.202','/api/contexts');
-  var jsonBody = jsonEncode({'words': words});
-  final response = await http.post(url, headers: { 'Content-Type': 'application/json',},
-body: jsonBody
-  );
-  if (response.statusCode == 200) {
-    var decodedBody = utf8.decode(response.bodyBytes);
-    var rawExamples = jsonDecode(decodedBody) as List<dynamic>;
-    List<Map<String, dynamic>> rawExamplesList = rawExamples
-        .map((item) => item as Map<String, dynamic>)
-        .toList();
-    List<WordsWithContexts> examples = [];
-    for (var element in rawExamplesList) {
-      examples.add(WordsWithContexts.fromJson(element));
+Future<List<WordsWithContexts>> fetchWordsWithContexts(int collectionId, List<WordsPair> words) async {
+  var url = Uri.http(kBaseUrl,'/api/collections/$collectionId/contexts');
+  await http.delete(url);
+  var ids = jsonEncode(words.map((w) => w.id).toList());
+  final response = await http.post(url, headers: { 'Content-Type': 'application/json'}, body: ids );
+  if (response.statusCode == 201) {
+    final getAllResponses = await http.get(url);
+    if (getAllResponses.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(getAllResponses.body);
+      data.removeWhere((dat) => !ids.contains(dat['word']['id'].toString()));
+      return data.map((item) {
+        final word = WordsPair.fromJson(item['word']);
+        final context = ContextsPair.fromJson(item['context']);
+        return WordsWithContexts(wordsPair: word, contexts: context);
+      }).toList();
+    } else {
+      throw Exception('Failed to fetch generated contexts');
     }
-    return examples;
   } else {
-    throw Exception('Failed to load words with contexts');
+    return List.empty();
   }
 }
 
 class WordsWithContextsRoute extends StatefulWidget {
+  final int collectionId;
   final List<WordsPair> words;
 
-  const WordsWithContextsRoute({super.key, required this.words});
+  const WordsWithContextsRoute({super.key, required this.collectionId, required this.words});
 
   @override
   State<WordsWithContextsRoute> createState() => _WordsWithContextsRoute();
@@ -99,26 +109,44 @@ class _WordsWithContextsRoute extends State<WordsWithContextsRoute> {
 
   @override
   void initState() {
-    futureExamples = fetchWordsWithContexts(widget.words);
+    futureExamples = fetchWordsWithContexts(widget.collectionId, widget.words);
     super.initState();
   }
+  _moveToDownload() async {
+    if (!Platform.isAndroid) {
+      print("This method is Android only");
+      return null;
+    }
 
-  _moveToDownload()  async {
-    // TODO: finish it later
-    print("asd");
-    //final directoryPath = await FilePicker.platform.getDirectoryPath();
-    //if (directoryPath != null) {
-    //  print(directoryPath);
-    //} else {
-    //  // User canceled the picker
-    //}
-    //Navigator.push(
-    //  context,
-    //  MaterialPageRoute(
-    //
-    //    builder: (context) => const RequestedFile(),
-    //  ),
-    //);
+    var status = await Permission.storage.status;
+    if (!status.isGranted) {
+      status = await Permission.storage.request();
+      if (status.isGranted) {
+        print("Storage permission granted");
+      } else if (status.isPermanentlyDenied) {
+        openAppSettings(); // allow user to manually enable
+      }
+    }
+    final url = Uri.http(kBaseUrl, "/api/collections/${widget.collectionId}/anki");
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final downloadsDir = Directory('/storage/emulated/0/Download');
+      if (!await downloadsDir.exists()) {
+        print("Downloads directory does not exist");
+        return null;
+      }
+
+      final filePath = "${downloadsDir.path}/collection_${widget.collectionId}.apkg";
+      final file = File(filePath);
+
+      await file.writeAsBytes(response.bodyBytes);
+      print("File saved to $filePath");
+      return filePath;
+    } else {
+      print("Failed to download file. Status: ${response.statusCode}");
+      return null;
+    }
   }
 
   @override
@@ -139,8 +167,35 @@ class _WordsWithContextsRoute extends State<WordsWithContextsRoute> {
             ),
           ),
 
-          floatingActionButton: FloatingActionButton(onPressed: _moveToDownload,
-            tooltip: 'Generate contexts', child: const Icon(Icons.file_download),),
+          floatingActionButton: FutureBuilder<List<WordsWithContexts>>(
+            future: futureExamples,
+            builder: (context, snapshot) {
+              bool isEnabled = snapshot.hasData && snapshot.data!.isNotEmpty;
+              return FloatingActionButton(
+                onPressed: isEnabled ? () async {
+                  final filePath = await _moveToDownload();  // Get the file path back
+
+                  if (filePath != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Download complete: collection_${widget.collectionId}.apkg'),
+                        action: SnackBarAction(
+                          label: 'OPEN',
+                          onPressed: () {
+                            OpenFilex.open(filePath);
+                          },
+                        ),
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                  }
+                } : null,
+                tooltip: 'Generate contexts',
+                backgroundColor: isEnabled ? null : Colors.grey,
+                child: const Icon(Icons.file_download),
+              );
+            },
+          ),
           body: ListView(
               children: [
                 Center(
@@ -185,19 +240,19 @@ class WordsWithContextsTable extends StatelessWidget {
             children: [
               TableCell(
                   verticalAlignment: TableCellVerticalAlignment.top,
-                  child: Text(example.wordsPair.pl)
+                  child: Text(example.wordsPair.og)
               ),
               TableCell(
                   verticalAlignment: TableCellVerticalAlignment.top,
-                  child: Text(example.wordsPair.en)
+                  child: Text(example.wordsPair.tr)
               ),
               TableCell(
                   verticalAlignment: TableCellVerticalAlignment.top,
-                  child: Text(example.contexts.pl)
+                  child: Text(example.contexts.og)
               ),
               TableCell(
                   verticalAlignment: TableCellVerticalAlignment.top,
-                  child: Text(example.contexts.en)
+                  child: Text(example.contexts.tr)
               )
             ],
           );
@@ -205,4 +260,3 @@ class WordsWithContextsTable extends StatelessWidget {
     );
   }
 }
-

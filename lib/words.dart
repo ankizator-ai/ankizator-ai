@@ -1,52 +1,52 @@
 import 'dart:convert';
-
+import 'package:ankizator_ai/main.dart';
 import 'package:http/http.dart' as http;
 
 class WordsPair {
-  final String pl;
-  final String en;
+  final int id;
+  final String og;
+  final String tr;
   bool chosen = false;
   WordsPair ({
-    required this.pl,
-    required this.en,
+    required this.id,
+    required this.og,
+    required this.tr,
   });
   factory WordsPair.fromJson(Map<String, dynamic> json) {
     return switch (json) {
       {
-      'pl': String pl,
-      'en': String en,
+      'id': int id,
+      'og': String og,
+      'tr': String tr,
       } =>
           WordsPair(
-            pl: pl,
-            en: en,
+            id: id,
+            og: og,
+            tr: tr,
           ),
       _ => throw const FormatException('Failed to decode words'),
     };
   }
   Map<String, dynamic> toJson() {
     return {
-      'pl': pl,
-      'en': en,
+      'id': id,
+      'og': og,
+      'tr': tr,
     };
   }
 }
 
-Future<List<WordsPair>> fetchWords(String urlMerula) async {
-  var url = Uri.http('138.2.174.202','/api/words');
-  var destination = urlMerula;
-  var jsonBody = jsonEncode({'source': destination});
-  final response = await http.post(url, headers: { 'Content-Type': 'application/json',},
-body: jsonBody
-  );
+Future<List<WordsPair>> fetchWords(int sourceId) async {
+  var url = Uri.http(kBaseUrl, '/api/collections/$sourceId/words');
+  final response = await http.get(url); // Changed POST to GET, unless your API expects POST
+
   if (response.statusCode == 200) {
     var decodedBody = utf8.decode(response.bodyBytes);
-    var rawWords = jsonDecode(decodedBody) as Map<String, dynamic>;
-    List<WordsPair> sources = [];
-    for (var element in rawWords['data']) {
-      sources.add(WordsPair.fromJson(element));
-    }
-    return sources;
+    var rawWords = jsonDecode(decodedBody) as List<dynamic>;
+    List<WordsPair> words = rawWords.map((e) => WordsPair.fromJson(e)).toList();
+    return words;
   } else {
     throw Exception('Failed to load words');
   }
 }
+
