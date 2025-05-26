@@ -1,4 +1,4 @@
-package com.example.ankizator_ai;
+package io.github.ankizator_ai;
 
 import io.flutter.embedding.android.FlutterActivity;
 
